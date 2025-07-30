@@ -57,6 +57,7 @@
 #include "texturemanager.h"
 #include "v_draw.h"
 #include "vm.h"
+#include <g_levellocals.h>
 
 EXTERN_CVAR(Int, cl_gfxlocalization)
 EXTERN_CVAR(Bool, m_quickexit)
