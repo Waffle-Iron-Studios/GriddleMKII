@@ -288,8 +288,8 @@ endif()
 
 # Check for functions that may or may not exist.
 
-require_stricmp()
-require_strnicmp()
+gz_require_stricmp()
+gz_require_strnicmp()
 
 if( NOT MSVC )
 	add_definitions( -D__forceinline=inline )
