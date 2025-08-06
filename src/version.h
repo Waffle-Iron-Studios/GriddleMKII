@@ -41,7 +41,7 @@ const char *GetVersionString();
 
 /** Lots of different version numbers **/
 
-#define VERSIONSTR "1.11.0pre"
+#define VERSIONSTR "1.11.0pre (Saccharine)"
 
 // The version as seen in the Windows resource
 #define RC_FILEVERSION 1,11,0,0
@@ -91,7 +91,7 @@ const char *GetVersionString();
 #define SAVEVER 4560
 
 // This is so that derivates can use the same savegame versions without worrying about engine compatibility
-#define GAMESIG "GRIDDLE"
+#define GAMESIG "SACCHARINE"
 #define BASEWAD "griddle.pk3"
 // Set OPTIONALWAD to "" (null) to disable searching for it
 #define OPTIONALWAD ""
@@ -99,9 +99,9 @@ const char *GetVersionString();
 #define VR3D_ENABLED
 
 // More stuff that needs to be different for derivatives.
-#define GAMENAME "Griddle"
-#define WGAMENAME L"Griddle"
-#define GAMENAMELOWERCASE "griddle"
+#define GAMENAME "Saccharine"
+#define WGAMENAME L"Saccharine"
+#define GAMENAMELOWERCASE "saccharine"
 #define QUERYIWADDEFAULT false
 #define FORUM_URL "http://www.waffleironstudios.com"
 #define BUGS_FORUM_URL	"http://www.waffleironstudios.com"
