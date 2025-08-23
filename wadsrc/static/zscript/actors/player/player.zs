@@ -1891,6 +1891,7 @@ class PlayerPawn : Actor
 
 		if (weapon != null)
 		{
+			weapon.OnSelect();
 			weapon.PlayUpSound(self);
 			player.refire = 0;
 
@@ -1983,6 +1984,7 @@ class PlayerPawn : Actor
 		Weapon weap = player.ReadyWeapon;
 		if ((weap != null) && (player.health > 0 || !weap.bNoDeathDeselect))
 		{
+			weap.OnDeselect();
 			player.SetPsprite(PSP_WEAPON, weap.GetDownState());
 		}
 	}

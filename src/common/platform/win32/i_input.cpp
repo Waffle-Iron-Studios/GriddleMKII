@@ -441,11 +441,6 @@ LRESULT CALLBACK WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		break;
 
 	case WM_SYSKEYDOWN:
-		// Pressing Alt+Enter can toggle between fullscreen and windowed.
-		if (wParam == VK_RETURN && k_allowfullscreentoggle && !(lParam & 0x40000000))
-		{
-			ToggleFullscreen = !ToggleFullscreen;
-		}
 		// Pressing Alt+F4 quits the program.
 		if (wParam == VK_F4 && !(lParam & 0x40000000))
 		{
@@ -641,14 +636,15 @@ void I_StartFrame ()
 	}
 }
 
-void I_GetAxes(float axes[NUM_JOYAXIS])
+void I_GetAxes(float axes[NUM_AXIS_CODES])
 {
 	int i;
 
-	for (i = 0; i < NUM_JOYAXIS; ++i)
+	for (i = 0; i < NUM_AXIS_CODES; ++i)
 	{
-		axes[i] = 0;
+		axes[i] = 0.0f;
 	}
+
 	if (use_joystick)
 	{
 		for (i = 0; i < NUM_JOYDEVICES; ++i)
