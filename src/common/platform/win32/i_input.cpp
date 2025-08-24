@@ -1,9 +1,11 @@
 /*
 ** i_input.cpp
+**
 ** Handles input from keyboard, mouse, and joystick
 **
 **---------------------------------------------------------------------------
 ** Copyright 1998-2009 Randy Heit
+** Copyright 2017-2025 GZDoom Maintainers and Contributors
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -54,7 +56,6 @@
 #define GET_RAWINPUT_CODE_WPARAM(wParam)	((wParam) & 0xff)
 #endif
 
-
 #include "c_dispatch.h"
 #include "m_argv.h"
 #include "i_input.h"
@@ -74,12 +75,12 @@
 #include "c_buttons.h"
 #include "cmdlib.h"
 #include "i_mainwindow.h"
+#include "m_haptics.h"
 
 // Compensate for w32api's lack
 #ifndef GET_XBUTTON_WPARAM
 #define GET_XBUTTON_WPARAM(wParam) (HIWORD(wParam))
 #endif
-
 
 #ifdef _DEBUG
 #define INGAME_PRIORITY_CLASS	NORMAL_PRIORITY_CLASS
@@ -89,7 +90,6 @@
 #endif
 
 FJoystickCollection *JoyDevices[NUM_JOYDEVICES];
-
 
 extern HINSTANCE g_hInst;
 
@@ -127,7 +127,6 @@ static bool EventHandlerResultForNativeMouse;
 bool win32EnableInput = true;
 
 EXTERN_CVAR(Bool, i_pauseinbackground);
-
 
 CVAR (Bool, k_allowfullscreentoggle, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 
@@ -391,7 +390,6 @@ LRESULT CALLBACK WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		}
 	}
 
-
 	switch (message)
 	{
 	case WM_DESTROY:
@@ -541,7 +539,6 @@ bool I_InitInput (void *hwnd)
 	return TRUE;
 }
 
-
 // Free all input resources
 void I_ShutdownInput ()
 {
@@ -591,7 +588,6 @@ void I_GetWindowEvent()
 	}
 }
 
-
 void I_GetEvent ()
 {
 	I_GetWindowEvent();
@@ -617,6 +613,7 @@ void I_StartTic ()
 	EventHandlerResultForNativeMouse = sysCallbacks.WantNativeMouse && sysCallbacks.WantNativeMouse();
 	I_CheckNativeMouse (false, EventHandlerResultForNativeMouse);
 	I_GetEvent ();
+	Joy_RumbleTick();
 }
 
 //

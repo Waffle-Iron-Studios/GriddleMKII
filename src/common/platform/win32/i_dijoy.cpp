@@ -1,8 +1,12 @@
 /*
+** i_dijoy.cpp
 **
+** Handles direct input joysticks
 **
 **---------------------------------------------------------------------------
+**
 ** Copyright 2005-2016 Randy Heit
+** Copyright 2017-2025 GZDoom Maintainers and Contributors
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -27,12 +31,14 @@
 ** THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 ** (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 ** THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+**
 **---------------------------------------------------------------------------
 **
 */
 
 // HEADER FILES ------------------------------------------------------------
 
+#include "m_joy.h"
 #define WIN32_LEAN_AND_MEAN
 #define DIRECTINPUT_VERSION 0x800
 #include <windows.h>
@@ -40,19 +46,19 @@
 #ifndef __GNUC__
 #include <wbemidl.h>
 #endif
+
 #include <oleauto.h>
 #include <malloc.h>
 
 #include "i_input.h"
 #include "d_eventbase.h"
-
 #include "gameconfigfile.h"
 #include "cmdlib.h"
 #include "v_text.h"
 #include "m_argv.h"
 #include "keydef.h"
 #include "printf.h"
-
+#include "m_joy.h"
 #include "i_mainwindow.h"
 
 #define SAFE_RELEASE(x)		{ if (x != NULL) { x->Release(); x = NULL; } }
@@ -146,7 +152,6 @@ public:
 
 // MACROS ------------------------------------------------------------------
 
-
 // TYPES -------------------------------------------------------------------
 
 class FDInputJoystick : public FInputDevice, IJoystickConfig
@@ -164,6 +169,10 @@ public:
 	float GetSensitivity();
 	virtual void SetSensitivity(float scale);
 
+	bool HasHaptics();
+	float GetHapticsStrength();
+	void SetHapticsStrength(float strength);
+
 	int GetNumAxes();
 	float GetAxisDeadZone(int axis);
 	const char *GetAxisName(int axis);
@@ -179,6 +188,7 @@ public:
 	void SetAxisResponseCurvePoint(int axis, int point, float value);
 
 	bool IsSensitivityDefault();
+	bool IsHapticsStrengthDefault();
 	bool IsAxisDeadZoneDefault(int axis);
 	bool IsAxisScaleDefault(int axis);
 	bool IsAxisDigitalThresholdDefault(int axis);
@@ -909,6 +919,50 @@ void FDInputJoystick::SetSensitivity(float scale)
 bool FDInputJoystick::IsSensitivityDefault()
 {
 	return Multiplier == JOYSENSITIVITY_DEFAULT;
+}
+
+//===========================================================================
+//
+// FDInputJoystick :: HasHaptics
+//
+//===========================================================================
+
+bool FDInputJoystick::HasHaptics()
+{
+	return false;
+}
+
+//===========================================================================
+//
+// FDInputJoystick :: GetHapticsStrength
+//
+//===========================================================================
+
+float FDInputJoystick::GetHapticsStrength()
+{
+	return JOYHAPSTRENGTH_DEFAULT;
+}
+
+//===========================================================================
+//
+// FDInputJoystick :: SetHapticsStrength
+//
+//===========================================================================
+
+void FDInputJoystick::SetHapticsStrength(float strength)
+{
+	// nope
+}
+
+//===========================================================================
+//
+// FDInputJoystick :: IsHapticsStrengthDefault
+//
+//===========================================================================
+
+bool FDInputJoystick::IsHapticsStrengthDefault()
+{
+	return true;
 }
 
 //===========================================================================
