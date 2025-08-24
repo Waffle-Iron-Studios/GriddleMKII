@@ -1,8 +1,12 @@
 /*
 ** i_joystick.cpp
 **
+** Handles sdl joysticks and gamepads
+**
 **---------------------------------------------------------------------------
+**
 ** Copyright 2005-2016 Randy Heit
+** Copyright 2017-2025 GZDoom Maintainers and Contributors
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -27,16 +31,18 @@
 ** THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 ** (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 ** THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+**
 **---------------------------------------------------------------------------
 **
 */
+
 #include <SDL.h>
 #include <SDL_gamecontroller.h>
+#include <cstdint>
 #include <cstdlib>
 
 #include "basics.h"
 #include "cmdlib.h"
-
 #include "d_eventbase.h"
 #include "i_input.h"
 #include "m_joy.h"
@@ -51,6 +57,11 @@ static const EAxisCodes ControllerAxisCodes[][2] =
 	{ AXIS_CODE_PAD_RTRIGGER, AXIS_CODE_NULL }
 };
 
+#define HAPTICS          0b0001
+#define HAPTICS_TRIGGERS 0b0010
+
+EXTERN_CVAR(Bool, use_joystick)
+
 class SDLInputJoystick: public IJoystickConfig
 {
 public:
@@ -59,6 +70,8 @@ public:
 	InstanceID(SDL_JoystickGetDeviceInstanceID(DeviceIndex)),
 	Multiplier(JOYSENSITIVITY_DEFAULT),
 	Enabled(true),
+	Haptics(0),
+	HapticsStrength(JOYHAPSTRENGTH_DEFAULT),
 	SettingsChanged(false)
 	{
 		if (SDL_IsGameController(DeviceIndex))
@@ -73,6 +86,7 @@ public:
 			{
 				NumAxes = SDL_CONTROLLER_AXIS_MAX;
 				NumHats = 0;
+				Haptics = SDL_GameControllerHasRumble(Mapping) | SDL_GameControllerHasRumbleTriggers(Mapping) << 1;
 
 				SetDefaultConfig();
 			}
@@ -124,6 +138,25 @@ public:
 	{
 		SettingsChanged = true;
 		Multiplier = scale;
+	}
+
+	bool HasHaptics()
+	{
+		return Haptics != 0;
+	}
+
+	float GetHapticsStrength()
+	{
+		return HasHaptics()
+			? HapticsStrength
+			: 0;
+	}
+
+	void SetHapticsStrength(float strength)
+	{
+		if (!HasHaptics()) return;
+		SettingsChanged = true;
+		HapticsStrength = clamp(strength, 0.f, 2.f);
 	}
 
 	int GetNumAxes()
@@ -195,6 +228,10 @@ public:
 	{
 		return Multiplier == JOYSENSITIVITY_DEFAULT;
 	}
+	bool IsHapticsStrengthDefault()
+	{
+		return HapticsStrength == JOYHAPSTRENGTH_DEFAULT;
+	}
 	bool IsAxisDeadZoneDefault(int axis)
 	{
 		if(axis >= DefaultAxesCount)
@@ -218,6 +255,29 @@ public:
 		if(axis >= DefaultAxesCount)
 			return Axes[axis].ResponseCurvePreset == JOYCURVE_DEFAULT;
 		return Axes[axis].ResponseCurvePreset == DefaultAxes[axis].ResponseCurvePreset;
+	}
+
+	void Rumble(float high_freq, float low_freq, float left_trig, float right_trig)
+	{
+		uint16_t duration_ms = -1; // turn on for max time (we'll turn it off later ourselves)
+
+		if (Haptics & HAPTICS)
+		{
+			SDL_GameControllerRumble(
+				Mapping,
+				static_cast<uint16_t> (0xffff * clamp(high_freq*HapticsStrength, 0.f, 1.f)),
+				static_cast<uint16_t> (0xffff * clamp(low_freq*HapticsStrength, 0.f, 1.f)),
+				duration_ms);
+		}
+
+		if (Haptics & HAPTICS_TRIGGERS)
+		{
+			SDL_GameControllerRumbleTriggers(
+				Mapping,
+				static_cast<uint16_t> (0xffff * clamp(left_trig*HapticsStrength, 0.f, 1.f)),
+				static_cast<uint16_t> (0xffff * clamp(right_trig*HapticsStrength, 0.f, 1.f)),
+				duration_ms);
+		}
 	}
 
 	void SetDefaultConfig()
@@ -524,6 +584,8 @@ protected:
 	TArray<AxisInfo>	Axes;
 	int					NumAxes;
 	int					NumHats;
+	int					Haptics;
+	float				HapticsStrength;
 	bool 				SettingsChanged;
 
 	friend class SDLInputJoystickManager;
@@ -584,6 +646,16 @@ public:
 		}
 	}
 
+	void Rumble(float high_freq, float low_freq, float left_trig, float right_trig)
+	{
+		for(unsigned int i = 0;i < Joysticks.Size();i++)
+		{
+			if (Joysticks[i]->Enabled) {
+				Joysticks[i]->Rumble(high_freq, low_freq, left_trig, right_trig);
+			}
+		}
+	}
+
 	void ProcessInput() const
 	{
 		for(unsigned int i = 0;i < Joysticks.Size();++i)
@@ -611,7 +683,7 @@ static SDLInputJoystickManager *JoystickManager;
 void I_StartupJoysticks()
 {
 #ifndef NO_SDL_JOYSTICK
-	if(SDL_InitSubSystem(SDL_INIT_JOYSTICK | SDL_INIT_GAMECONTROLLER) >= 0)
+	if(SDL_InitSubSystem(SDL_INIT_JOYSTICK | SDL_INIT_HAPTIC | SDL_INIT_GAMECONTROLLER) >= 0)
 		JoystickManager = new SDLInputJoystickManager();
 #endif
 }
@@ -643,6 +715,13 @@ void I_GetAxes(float axes[NUM_AXIS_CODES])
 	{
 		JoystickManager->AddAxes(axes);
 	}
+}
+
+void I_Rumble(double high_freq, double low_freq, double left_trig, double right_trig)
+{
+	if (!use_joystick) return;
+
+	JoystickManager->Rumble(high_freq, low_freq, left_trig, right_trig);
 }
 
 void I_ProcessJoysticks()
